@@ -102,6 +102,7 @@ export class ChangeIncomeAndExpense {
           comment: operation.comment
         })
         if (result) {
+          location.href = '#/operations';
           if (!result) {
             new Sidebars();
             throw new Error(result.message);
@@ -115,7 +116,6 @@ export class ChangeIncomeAndExpense {
     // перенаправление на страницу
     agree.onclick = () => {
       updateOperation(operation);
-      location.href = '#/operations';
     }
   }
 
