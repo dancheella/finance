@@ -1,7 +1,7 @@
-import {GetCategory} from "../services/getCategory.js";
-import {CustomHttp} from "../services/custom-http.js";
-import config from "../../config/config.js";
-import {Sidebars} from "./sidebars.js";
+import {GetCategory} from "../services/getCategory";
+import {CustomHttp} from "../services/custom-http";
+import config from "../../config/config";
+import {Sidebars} from "./sidebars";
 
 export class ChangeIncomeCategory {
   constructor() {

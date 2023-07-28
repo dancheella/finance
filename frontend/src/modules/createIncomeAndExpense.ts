@@ -1,8 +1,8 @@
-import {Sidebars} from "./sidebars.js";
-import {GetCategory} from "../services/getCategory.js";
+import {Sidebars} from "./sidebars";
+import {GetCategory} from "../services/getCategory";
 import dayjs from 'dayjs';
-import {CustomHttp} from "../services/custom-http.js";
-import config from "../../config/config.js";
+import {CustomHttp} from "../services/custom-http";
+import config from "../../config/config";
 
 export class CreateIncomeAndExpense {
   constructor(category) {

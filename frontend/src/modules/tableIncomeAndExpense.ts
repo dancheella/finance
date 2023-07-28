@@ -1,8 +1,8 @@
-import {Sidebars} from "./sidebars.js";
-import {CustomHttp} from "../services/custom-http.js";
-import {GetOperation} from "../services/getOperation.js";
+import {Sidebars} from "./sidebars";
+import {CustomHttp} from "../services/custom-http";
+import {GetOperation} from "../services/getOperation";
 import dayjs from "dayjs";
-import config from "../../config/config.js";
+import config from "../../config/config";
 
 export class TableIncomeAndExpense {
   constructor() {

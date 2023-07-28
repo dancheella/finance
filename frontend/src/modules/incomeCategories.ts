@@ -1,6 +1,6 @@
-import {Sidebars} from "./sidebars.js";
-import {GetCategory} from "../services/getCategory.js";
-import {Popup} from "./popap.js";
+import {Sidebars} from "./sidebars";
+import {GetCategory} from "../services/getCategory";
+import {Popup} from "./popap";
 
 export class IncomeCategories {
   constructor() {

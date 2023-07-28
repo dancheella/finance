@@ -1,9 +1,9 @@
-import {GetCategory} from "../services/getCategory.js";
-import {IncomeCategories} from "./incomeCategories.js";
-import {GetOperation} from "../services/getOperation.js";
-import {CustomHttp} from "../services/custom-http.js";
-import {Sidebars} from "./sidebars.js";
-import config from "../../config/config.js";
+import {GetCategory} from "../services/getCategory";
+import {IncomeCategories} from "./incomeCategories";
+import {GetOperation} from "../services/getOperation";
+import {CustomHttp} from "../services/custom-http";
+import {Sidebars} from "./sidebars";
+import config from "../../config/config";
 
 export class Popup {
   constructor(category) {

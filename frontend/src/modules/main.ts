@@ -1,6 +1,6 @@
-import {Sidebars} from "./sidebars.js";
+import {Sidebars} from "./sidebars";
 import {Chart} from "chart.js/auto";
-import {Filters} from "../services/fillter.js";
+import {Filters} from "../services/fillter";
 import dayjs from "dayjs";
 
 export class Main {

@@ -4,10 +4,23 @@ const CopyPlugin = require("copy-webpack-plugin");
 const MomentLocalesPlugin = require('moment-locales-webpack-plugin');
 
 module.exports = {
-  entry: './src/app.js',
+  entry: './src/app.ts',
+  devtool: 'inline-source-map',
   mode: 'development',
+  module: {
+    rules: [
+      {
+        test: /\.tsx?$/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
+      },
+    ],
+  },
+  resolve: {
+    extensions: ['.tsx', '.ts', '.js'],
+  },
   output: {
-    filename: 'main.js',
+    filename: 'main.ts',
     path: path.resolve(__dirname, 'dist'),
     clean: true,
   },
@@ -31,18 +44,4 @@ module.exports = {
       localesToKeep: ['es-us', 'ru'],
     }),
   ],
-  module: {
-    rules: [
-      {
-        test: /\.js$/,
-        exclude: /node_modules/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: ['@babel/preset-env']
-          }
-        }
-      }
-    ]
-  }
 };

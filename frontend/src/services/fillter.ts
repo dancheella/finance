@@ -1,4 +1,4 @@
-import {GetOperation} from "./getOperation.js";
+import {GetOperation} from "./getOperation";
 
 export class Filters {
   constructor(period, from, to) {

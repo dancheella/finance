@@ -1,6 +1,6 @@
-import {Auth} from "../services/auth.js";
-import config from "../../config/config.js";
-import {CustomHttp} from "../services/custom-http.js";
+import {Auth} from "../services/auth";
+import config from "../../config/config";
+import {CustomHttp} from "../services/custom-http";
 
 export class Sidebars {
   constructor() {
