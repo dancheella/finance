@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@cubejs-client/core": "^0.33.12",
-    "chart.js": "^4.3.0",
+    "chart.js": "^4.3.2",
     "dayjs": "^1.11.9",
     "moment": "^2.29.4",
     "owc-dev-server": "^1.0.1"
