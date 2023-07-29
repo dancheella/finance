@@ -4,6 +4,14 @@ import {Filters} from "../services/fillter";
 import dayjs from "dayjs";
 
 export class Main {
+  readonly today: HTMLElement | null;
+  readonly week: HTMLElement | null;
+  readonly month: HTMLElement | null;
+  readonly year: HTMLElement | null;
+  readonly all: HTMLElement | null;
+  readonly interval: HTMLElement | null;
+  readonly allBtns: NodeListOf<Element>;
+
   constructor() {
     this.today = document.getElementById("today");
     this.week = document.getElementById("week");

@@ -1,7 +1,7 @@
 import config from "../../config/config";
 import {UserInfoType} from "../types/user-info.type";
 import {RefreshResponseType} from "../types/refresh-response.type";
-import {LogoutResponseType} from "../types/logout-response.type";
+import {DefaultResponseType} from "../types/default-response.type";
 
 export class Auth {
 
@@ -50,7 +50,7 @@ export class Auth {
       });
 
       if (response && response.status === 200) {
-        const result: LogoutResponseType | null = await response.json();
+        const result: DefaultResponseType | null = await response.json();
 
         if (result && !result.error) {
           this.removeTokens();

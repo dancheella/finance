@@ -1,0 +1,1 @@
+export type CategoryNamePageType = 'incomes' | 'createIncCat' | 'changeIncCat' | 'expense' | 'createExpCat' | 'changeExpCat';

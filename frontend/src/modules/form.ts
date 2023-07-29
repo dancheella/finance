@@ -1,14 +1,23 @@
 import {CustomHttp} from "../services/custom-http";
 import config from "../../config/config";
 import {Auth} from "../services/auth";
+import {FormFieldType} from "../types/form-field.type";
+import {SignupResponseType} from "../types/signup-response.type";
+import {DefaultResponseType} from "../types/default-response.type";
+import {LoginResponseType} from "../types/login-response.type";
 
 export class Form {
-  constructor(page) {
+  private agreeElement: HTMLInputElement | null;
+  readonly processElement: HTMLElement | null;
+  readonly page: 'signup' | 'login';
+  private fields: FormFieldType[] = [];
+
+  constructor(page: 'signup' | 'login') {
     this.agreeElement = null;
     this.processElement = null;
     this.page = page;
 
-    const accessToken = localStorage.getItem(Auth.accessTokenKey);
+    const accessToken: string | null = localStorage.getItem(Auth.accessTokenKey);
 
     if (accessToken) {
       location.href = '/#/main';
@@ -50,52 +59,72 @@ export class Form {
       });
     }
 
-    const that = this;
+    const that: Form = this;
 
-    this.fields.forEach(item => {
-      item.element = document.getElementById(item.id);
-      item.element.onchange = function () {
-        that.validateField.call(that, item, this);
-      };
+    this.fields.forEach((item: FormFieldType) => {
+      item.element = document.getElementById(item.id) as HTMLInputElement;
+      if (item.element) {
+        item.element.onchange = function () {
+          that.validateField.call(that, item, <HTMLInputElement>this);
+        };
+      }
     });
 
     this.processElement = document.getElementById('process');
-    this.processElement.onclick = function () {
-      that.processForm();
+    if (this.processElement) {
+      this.processElement.onclick = function () {
+        that.processForm();
+      }
     }
 
     // if (this.page === 'login') {
-    //   this.agreeElement = document.getElementById('remember');
-    //   this.agreeElement.onchange = function () {
-    //     that.validateForm();
+    //   this.agreeElement = document.getElementById('remember') as HTMLInputElement;
+    //   if ( this.agreeElement) {
+    //     this.agreeElement.onchange = function () {
+    //       that.validateForm();
+    //     }
     //   }
     // }
   }
 
   // проверка валидности полей
-  validateField(field, element) {
-    if (!element.value || !element.value.match(field.regex)) {
-      element.style.borderColor = 'red';
-      element.parentNode.style.marginBottom = '0';
-      field.valid = false;
-      document.getElementById(`${element.id}-error`).style.display = 'block';
-    } else {
-      element.removeAttribute('style');
-      element.parentNode.style.marginBottom = '10px';
-      field.valid = true;
-      document.getElementById(`${element.id}-error`).style.display = 'none';
+  private validateField(field: FormFieldType, element: HTMLInputElement): void {
+    const parentNode: HTMLElement = element.parentNode as HTMLElement;
+    const errorElement: HTMLElement | null = document.getElementById(`${element.id}-error`);
+
+    if (element.parentNode) {
+      if (!element.value || !element.value.match(field.regex)) {
+        element.style.borderColor = 'red';
+        parentNode.style.marginBottom = '0';
+        field.valid = false;
+      } else {
+        element.removeAttribute('style');
+        parentNode.style.marginBottom = '10px';
+        field.valid = true;
+      }
+
+      if (errorElement) {
+        errorElement.style.display = field.valid ? 'none' : 'block';
+      }
     }
 
     if (this.page === 'signup' && field.name === 'passwordRepeat') {
-      const passwordField = this.fields.find(item => item.name === 'password');
-      const passwordElement = passwordField.element;
-      const passwordValue = passwordElement.value;
+      const passwordField: FormFieldType | undefined = this.fields.find((item: FormFieldType) => item.name === 'password');
 
-      if (passwordValue && element.value !== passwordValue) {
-        element.style.borderColor = 'red';
-        element.parentNode.style.marginBottom = '0';
-        field.valid = false;
-        document.getElementById(`${element.id}-error`).style.display = 'block';
+      if (passwordField !== undefined) {
+        const passwordElement: HTMLInputElement | null = passwordField.element;
+        const passwordValue: string | undefined = passwordElement?.value;
+
+        if (passwordValue && element.value !== passwordValue) {
+          element.style.borderColor = 'red';
+          if (parentNode !== null) {
+            parentNode.style.marginBottom = '0';
+          }
+          field.valid = false;
+          if (errorElement !== null) {
+            errorElement.style.display = 'block';
+          }
+        }
       }
     }
 
@@ -103,39 +132,54 @@ export class Form {
   }
 
   // проверка валидности формы
-  validateForm() {
-    const validForm = this.fields.every(item => item.valid);
-    // const isValid = this.agreeElement ? this.agreeElement.checked && validForm : validForm;
-    if (validForm) {
-      this.processElement.removeAttribute('disabled');
-    } else {
-      this.processElement.setAttribute('disabled', 'disabled');
+  private validateForm(): boolean {
+    const validForm: boolean = this.fields.every((item: FormFieldType) => item.valid);
+    // const isValid: boolean = this.agreeElement ? this.agreeElement.checked && validForm : validForm;
+    if (this.processElement) {
+      if (validForm) {
+        this.processElement.removeAttribute('disabled');
+      } else {
+        this.processElement.setAttribute('disabled', 'disabled');
+      }
     }
+
     return validForm;
   }
 
   // обработка формы при отправке
-  async processForm() {
+  private async processForm(): Promise<void> {
     if (this.validateForm()) {
-      const email = this.fields.find(item => item.name === 'email').element.value;
-      const password = this.fields.find(item => item.name === 'password').element.value;
+      const email: string = this.fields.find((item: FormFieldType) => item.name === 'email')?.element?.value ?? '';
+      const password: string = this.fields.find((item: FormFieldType) => item.name === 'password')?.element?.value ?? '';
 
       if (this.page === 'signup') {
-        const name = this.fields.find(item => item.name === 'name').element.value.split(' ')[0];
-        const lastName = this.fields.find(item => item.name === 'name').element.value.split(' ')[1];
-        const passwordRepeat = this.fields.find(item => item.name === 'passwordRepeat').element.value;
+        const name: string = (this.fields.find((item: FormFieldType) => item.name === 'name')?.element?.value.split(' ')[0]) ?? '';
+        const lastName: string = (this.fields.find((item: FormFieldType) => item.name === 'name')?.element?.value.split(' ')[1]) ?? '';
+        const passwordRepeat: string = this.fields.find((item: FormFieldType) => item.name === 'passwordRepeat')?.element?.value ?? '';
+
 
         if (password !== passwordRepeat) {
-          const passwordRepeatElement = this.fields.find(item => item.name === 'passwordRepeat').element;
-          passwordRepeatElement.style.borderColor = 'red';
-          passwordRepeatElement.parentNode.style.marginBottom = '0';
-          this.fields.find(item => item.name === 'passwordRepeat').valid = false;
-          document.getElementById(`${passwordRepeatElement.id}-error`).style.display = 'block';
-          return;
+          const passwordRepeatField: FormFieldType | undefined = this.fields.find((item: FormFieldType) => item.name === 'passwordRepeat');
+          if (passwordRepeatField) {
+            const passwordRepeatElement: HTMLInputElement | null = passwordRepeatField.element;
+            if (passwordRepeatElement) {
+              passwordRepeatElement.style.borderColor = 'red';
+              const parentNode: HTMLElement = passwordRepeatElement.parentNode as HTMLElement;
+              if (parentNode) {
+                parentNode.style.marginBottom = '0';
+              }
+              passwordRepeatField.valid = false;
+              const errorElement: HTMLElement | null = document.getElementById(`${passwordRepeatElement.id}-error`);
+              if (errorElement) {
+                errorElement.style.display = 'block';
+              }
+              return;
+            }
+          }
         }
 
         try {
-          const result = await CustomHttp.request(config.host + '/signup', 'POST', {
+          const result: SignupResponseType | DefaultResponseType = await CustomHttp.request(config.host + '/signup', 'POST', {
             name: name,
             lastName: lastName,
             email: email,
@@ -144,23 +188,24 @@ export class Form {
           });
 
           if (result) {
-            if (!result.user) {
+            if (result.error || !result.user) {
               throw new Error(result.message);
             }
           }
         } catch (error) {
-          return console.log(error);
+          console.log(error);
+          return;
         }
       }
 
-      this.agreeElement = document.getElementById('remember');
-      let rememberMe = false;
+      this.agreeElement = document.getElementById('remember') as HTMLInputElement;
+      let rememberMe: boolean = false;
       if (this.page === 'login' && this.agreeElement) {
         rememberMe = this.agreeElement.checked;
       }
 
       try {
-        const result = await CustomHttp.request(config.host + '/login', 'POST', {
+        const result: LoginResponseType | DefaultResponseType = await CustomHttp.request(config.host + '/login', 'POST', {
           email: email,
           password: password,
           rememberMe: rememberMe,
