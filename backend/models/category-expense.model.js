@@ -28,7 +28,7 @@ class CategoryExpenseModel {
         return null;
     }
 
-    static delete(filter) {
+    static (filter) {
         return categories(filter).remove();
     }
 }

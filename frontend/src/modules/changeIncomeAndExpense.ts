@@ -3,96 +3,132 @@ import {CustomHttp} from "../services/custom-http";
 import config from "../../config/config";
 import dayjs from 'dayjs';
 import {GetCategory} from "../services/getCategory";
+import {OperationType} from "../types/operation.type";
+import {CategoriesResponseType} from "../types/categoty-response.type";
 
 export class ChangeIncomeAndExpense {
+  readonly titleHTML: HTMLElement | null;
+  readonly disagree: HTMLElement | null;
+  readonly id: string;
+
   constructor() {
-    new Sidebars();
+    this.titleHTML = document.getElementById('main-header');
+    this.disagree = document.getElementById('disagree');
 
-    const titleHTML = document.getElementById('main-header');
-    const disagree = document.getElementById('disagree');
+    this.id = window.location.hash.split('?')[1]; // получение значения id из текущего URL-адреса
 
-    const id = window.location.hash.split('?')[1]; // получение значения id из текущего URL-адреса
-
-    titleHTML.innerText = 'Редактирование дохода/расхода';
-
-    // перенаправление на страницу
-    disagree.onclick = () => {
-      location.href = '#/operations'
+    if (this.titleHTML) {
+      this.titleHTML.innerText = 'Редактирование дохода/расхода';
     }
 
-    this.loadOperation(this, id).then();
+    // перенаправление на страницу
+    if (this.disagree) {
+      this.disagree.onclick = () => {
+        location.href = '#/operations'
+      }
+    }
+
+    this.loadOperation(this, this.id).then();
+    new Sidebars();
   }
 
   // загрузка информации об операции
-  async loadOperation(that, id) {
+  async loadOperation(that: ChangeIncomeAndExpense, id: string): Promise<void> {
     await Sidebars.getBalance(); // запрос на баланс
     const operation = await CustomHttp.request(config.host + '/operations/' + id); // запрос на сервер
 
-    const type = document.getElementById('typeName');
-    const income = document.getElementById('income');
-    const expense = document.getElementById('expense');
-    const price = document.getElementById('price');
-    const date = document.getElementById('date');
-    const comment = document.getElementById('comment');
-    let categories;
+    const type: HTMLInputElement | null = document.getElementById('typeName') as HTMLInputElement;
+    const income: HTMLInputElement | null = document.getElementById('income') as HTMLInputElement;
+    const expense: HTMLInputElement | null = document.getElementById('expense') as HTMLInputElement;
+    const price: HTMLInputElement | null = document.getElementById('price') as HTMLInputElement;
+    const date: HTMLInputElement | null = document.getElementById('date') as HTMLInputElement;
+    const comment: HTMLInputElement | null = document.getElementById('comment') as HTMLInputElement;
+    let categories: CategoriesResponseType[] = [];
 
-    if (operation.type === 'income') {
+    if (type && income && operation.type === 'income') {
       type.removeAttribute('selected');
       income.setAttribute('selected', 'selected');
-    } else if (operation.type === 'expense') {
+    } else if (type && expense && operation.type === 'expense') {
       type.removeAttribute('selected');
       expense.setAttribute('selected', 'selected');
     }
 
-    type.value = operation.type;
-    categories = await that.getCat(type.value, operation); // получение списка категорий
-    price.value = operation.amount + ' $';
-    date.value = dayjs(operation.date).format('DD.MM.YYYY');
-    comment.value = operation.comment;
+    if (type) {
+      type.value = operation.type;
+      categories = await that.getCat(type.value, operation); // получение списка категорий
+    }
 
-    that.changeOperation(that, operation, categories);
+    if (price) {
+      price.value = operation.amount + ' $';
+    }
+
+    if (date) {
+      date.value = dayjs(operation.date).format('DD.MM.YYYY');
+    }
+
+    if (comment) {
+      comment.value = operation.comment;
+    }
+
+    that.changeOperation(that, operation, categories).then();
   }
 
   // обрабатывает изменения операции и обновляет соответствующие значения
-  async changeOperation(that, operation, categories) {
-    const type = document.getElementById('type');
-    const category = document.getElementById('category');
-    const amount = document.getElementById('price');
-    const date = document.getElementById('date');
-    const comment = document.getElementById('comment');
-    const agree = document.getElementById('agree');
+  async changeOperation(that: ChangeIncomeAndExpense, operation: OperationType, categories: CategoriesResponseType[]) {
+    const type: HTMLSelectElement | null = document.getElementById('type') as HTMLSelectElement;
+    const category: HTMLSelectElement | null = document.getElementById('category') as HTMLSelectElement;
+    const amount: HTMLInputElement | null = document.getElementById('price') as HTMLInputElement;
+    const date: HTMLInputElement | null = document.getElementById('date') as HTMLInputElement;
+    const comment: HTMLInputElement | null = document.getElementById('comment') as HTMLInputElement;
+    const agree: HTMLElement | null = document.getElementById('agree');
 
     // выбор операции
-    type.onchange = async () => {
-      if (type.value !== "Тип..") {
-        operation.type = type.value;
-        type.style.color = 'black';
-        categories = await that.getCat(type.value, operation);
-      }
-    };
-
-    const selectedCategory = categories.find(item => item.title === category.value);
-    operation.categoryId = selectedCategory.id;
-
-    category.onchange = () => {
-      operation.categoryId = categories.find(item => item.title === category.value).id;
-      category.style.color = 'black';
+    if (type) {
+      type.onchange = async () => {
+        if (type.value !== "Тип..") {
+          operation.type = type.value;
+          type.style.color = 'black';
+          categories = await that.getCat(type.value, operation);
+        }
+      };
     }
 
-    amount.onchange = () => {
-      operation.amount = Number(amount.value.split(' ')[0]);
-    };
+    // const selectedCategory = categories.find((item: CategoriesResponseType) => item.title === category.value);
+    // if (selectedCategory) {
+    //   operation.categoryId = selectedCategory.id;
+    // }
 
-    date.onchange = () => {
-      operation.date = dayjs(date.value, 'YYYY-MM-DD').format('YYYY-MM-DD');
-    };
+    if (category) {
+      category.onchange = () => {
+        const selectedCategory: CategoriesResponseType | undefined = categories.find((item: CategoriesResponseType) => item.title === category.value);
+        if (selectedCategory) {
+          operation.category = selectedCategory.title;
+          category.style.color = 'black';
+        }
+      };
+    }
 
-    comment.onchange = () => {
-      operation.comment = comment.value;
-    };
+
+    if (amount) {
+      amount.onchange = () => {
+        operation.amount = Number(amount.value.split(' ')[0]);
+      };
+    }
+
+    if (date) {
+      date.onchange = () => {
+        operation.date = dayjs(date.value, 'YYYY-MM-DD').format('YYYY-MM-DD');
+      };
+    }
+
+    if (comment) {
+      comment.onchange = () => {
+        operation.comment = comment.value;
+      };
+    }
 
     // отправка обновленной операции на сервер
-    async function updateOperation(operation) {
+    async function updateOperation(operation: OperationType): Promise<void> {
       try {
         const result = await CustomHttp.request(config.host + '/operations/' + operation.id, "PUT", {
           type: operation.type,
@@ -114,34 +150,35 @@ export class ChangeIncomeAndExpense {
     }
 
     // перенаправление на страницу
-    agree.onclick = () => {
-      updateOperation(operation);
+    if (agree) {
+      agree.onclick = () => {
+        updateOperation(operation);
+      }
     }
   }
 
   // получение списка категорий в зависимости от выбранного типа операции
-  async getCat(type, operation) {
+  async getCat(type: string, operation: OperationType) {
     const category = document.getElementById('category');
 
-    let options = [];
+    let options: HTMLOptionElement[] = [];
 
-    const categories = await new GetCategory(type);
+    const categories: CategoriesResponseType[] = await GetCategory.categories(type);
 
     if (category) {
-      const items = document.getElementsByTagName('option');
-      const newItems = [];
-      for (let arr of items) {
-        newItems.push(arr);
-      }
-      const filteredOptions = newItems.filter(item => item.id.includes('option_'));
-      filteredOptions.forEach(item => item.remove());
+      const items: HTMLOptionElement[] = Array.from(category.getElementsByTagName('option'));
+      const filteredOptions: HTMLOptionElement[] = items.filter((item: HTMLOptionElement) => item.id.includes('option_'));
+      filteredOptions.forEach((item: HTMLOptionElement) => item.remove());
     }
 
     const optionFirst = document.getElementById('option');
-    optionFirst.removeAttribute('selected');
+    if (optionFirst) {
+      optionFirst.removeAttribute('selected');
 
-    categories.forEach(item => {
-      const option = document.createElement('option');
+    }
+
+    categories.forEach((item: CategoriesResponseType) => {
+      const option: HTMLOptionElement = document.createElement('option');
       if (item.title === operation.category) {
         option.setAttribute('selected', 'selected');
       }
@@ -151,9 +188,11 @@ export class ChangeIncomeAndExpense {
       options.push(option);
     })
 
-    options.forEach(item => {
-      category.appendChild(item);
-    })
+    if (category) {
+      options.forEach((item: HTMLOptionElement): void => {
+        category.appendChild(item);
+      });
+    }
 
     return categories;
   }

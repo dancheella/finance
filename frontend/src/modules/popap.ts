@@ -4,9 +4,12 @@ import {GetOperation} from "../services/getOperation";
 import {CustomHttp} from "../services/custom-http";
 import {Sidebars} from "./sidebars";
 import config from "../../config/config";
+import {CategoriesResponseType} from "../types/categoty-response.type";
+import {DefaultResponseType} from "../types/default-response.type";
+import {OperationType} from "../types/operation.type";
 
 export class Popup {
-  constructor(category) {
+  constructor(category: string) {
     const that = this;
     this.openPopup(that, category).then();
 
@@ -14,45 +17,52 @@ export class Popup {
   }
 
   // открывает попап окно при нажатии на кнопку delete-category
-  async openPopup(item, categories) {
-    const urlRoute = window.location.hash.split('?')[0];
-    const popup = document.getElementById('popup');
-    const agree = document.getElementById('agree');
-    const disagree = document.getElementById('disagree');
-    const openButtons = document.getElementsByClassName('delete-category');
-    const changeButtons = document.getElementsByClassName('edit-category');
-    let categoryId = '';
-    let categoryTitle = '';
-    let categoriesList = await new GetCategory(categories);
+  private async openPopup(item: Popup, categories: string): Promise<void> {
+    const urlRoute: string = window.location.hash.split('?')[0];
+    const popup: HTMLElement | null = document.getElementById('popup');
+    const agree: HTMLElement | null = document.getElementById('agree');
+    const disagree: HTMLElement | null = document.getElementById('disagree');
+    const openButtons: HTMLCollectionOf<HTMLButtonElement> = document.getElementsByClassName('delete-category') as HTMLCollectionOf<HTMLButtonElement>;
+    const changeButtons: HTMLCollectionOf<HTMLButtonElement> = document.getElementsByClassName('edit-category') as HTMLCollectionOf<HTMLButtonElement>;
+    let categoryId: number;
+    let categoryTitle: string;
+    let categoriesList: CategoriesResponseType[] = await GetCategory.categories(categories);
 
-
-    function closePopup() {
-      popup.style.display = 'none';
-      categoryId = '';
-      categoryTitle = '';
+    function closePopup(): void {
+      if (popup) {
+        popup.style.display = 'none';
+      }
     }
 
-    for (let i = 0; i < openButtons.length; i++) {
-      openButtons[i].onclick = function () {
-        popup.style.display = 'flex';
-        categoryId = categoriesList[i].id;
-        categoryTitle = categoriesList[i].title;
+    for (let i: number = 0; i < openButtons.length; i++) {
+      openButtons[i].onclick = function (): void {
+        if (popup && categoryId && categoryTitle) {
+          popup.style.display = 'flex';
+          categoryId = categoriesList[i].id;
+          categoryTitle = categoriesList[i].title;
+        }
+
 
         if (urlRoute === '#/incomes') {
-          agree.onclick = () => {
-            item.deleteOperations(categoryTitle).then(() => deleteInc());
+          if (agree) {
+            agree.onclick = (): void => {
+              item.deleteOperations(categoryTitle).then(() => deleteInc());
+            }
           }
         }
+
         if (urlRoute === '#/expenses') {
-          agree.onclick = () => {
-            item.deleteOperations(categoryTitle).then(() => deleteExp());
-          };
+          if (agree) {
+            agree.onclick = (): void => {
+              item.deleteOperations(categoryTitle).then(() => deleteExp());
+            };
+          }
         }
-      };
+      }
     }
 
-    for (let i = 0; i < changeButtons.length; i++) {
-      changeButtons[i].onclick = function () {
+    for (let i: number = 0; i < changeButtons.length; i++) {
+      changeButtons[i].onclick = function (): void {
         categoryId = categoriesList[i].id;
         categoryTitle = categoriesList[i].title;
 
@@ -65,9 +75,11 @@ export class Popup {
       };
     }
 
-    disagree.addEventListener("click", closePopup);
+    if (disagree) {
+      disagree.addEventListener("click", closePopup);
+    }
 
-    function deleteExp() {
+    function deleteExp(): void {
       item.deleteCategory('/categories/expense/' + categoryId)
         .then(() => closePopup())
         .then(() => new IncomeCategories())
@@ -81,7 +93,7 @@ export class Popup {
   }
 
   // запрос на удаление категории
-  async deleteCategory(urlRoute) {
+  async deleteCategory(urlRoute: string): Promise<void> {
     try {
       const result = await CustomHttp.request(config.host + urlRoute, 'DELETE');
       if (result) {
@@ -95,17 +107,17 @@ export class Popup {
   }
 
   // удаление всех операций, связанных с заданной категорией
-  async deleteOperations(categoryTitle) {
-    let operations = await new GetOperation('all');
-    const deleteCategory = operations.filter(operation => operation.category === categoryTitle);
+  async deleteOperations(categoryTitle: string): Promise<void> {
+    const operations: OperationType[] = await GetOperation.getOperationsByPeriod('all');
+    const deleteCategory: OperationType[] = operations.filter(operation => operation.category === categoryTitle);
 
-    deleteCategory.forEach(item => deleteOperation(item.id));
+    deleteCategory.forEach((item: OperationType) => deleteOperation(item.id));
 
-    async function deleteOperation(id) {
+    async function deleteOperation(id: number): Promise<void> {
       try {
-        const result = await CustomHttp.request(config.host + '/operations/' + id, 'DELETE');
+        const result: DefaultResponseType = await CustomHttp.request(config.host + '/operations/' + id, 'DELETE');
         if (result) {
-          if (!result) {
+          if (!result.error) {
             throw new Error(result.message);
           }
         }

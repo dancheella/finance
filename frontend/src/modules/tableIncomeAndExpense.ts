@@ -1,97 +1,151 @@
 import {Sidebars} from "./sidebars";
 import {CustomHttp} from "../services/custom-http";
 import {GetOperation} from "../services/getOperation";
-import dayjs from "dayjs";
+import dayjs, {Dayjs} from "dayjs";
 import config from "../../config/config";
+import {OperationType} from "../types/operation.type";
+import {DefaultResponseType} from "../types/default-response.type";
 
 export class TableIncomeAndExpense {
+  readonly createIncome: HTMLElement | null;
+  readonly createExpense: HTMLElement | null;
+  readonly today: HTMLElement | null;
+  readonly week: HTMLElement | null;
+  readonly month: HTMLElement | null;
+  readonly year: HTMLElement | null;
+  readonly all: HTMLElement | null;
+  readonly interval: HTMLElement | null;
+  readonly allBtns: NodeListOf<Element>;
+  readonly budget: HTMLElement | null;
+
   constructor() {
-    const createIncome = document.getElementById('create-income');
-    const createExpense = document.getElementById('create-expense');
-    const today = document.getElementById('today');
-    const week = document.getElementById('week');
-    const month = document.getElementById('month');
-    const year = document.getElementById('year');
-    const all = document.getElementById('all');
-    const interval = document.getElementById('interval');
-    const allButtons = document.getElementsByClassName('table-btn');
+    this.createIncome = document.getElementById('create-income');
+    this.createExpense = document.getElementById('create-expense');
+    this.today = document.getElementById('today');
+    this.week = document.getElementById('week');
+    this.month = document.getElementById('month');
+    this.year = document.getElementById('year');
+    this.all = document.getElementById('all');
+    this.interval = document.getElementById('interval');
+    this.allBtns = document.querySelectorAll(".table-btn");
+
+
     this.budget = document.getElementById('budget');
 
-    today.classList.add('active');
-
-    function performButtonClick(btn) {
-      for (let i = 0; i < allButtons.length; i++) {
-        if (allButtons[i].classList.contains('active')) {
-          allButtons[i].classList.remove("active");
-        }
-      }
-      btn.classList.add('active');
+    if (this.today) {
+      this.today.classList.add('active');
     }
 
-    today.onclick = () => {
-      performButtonClick(today);
-      this.buildTable(this, 'today').then()
-    };
-
-    week.onclick = () => {
-      performButtonClick(week);
-      this.buildTable(this, 'week').then()
-    };
-
-    month.onclick = () => {
-      performButtonClick(month);
-      this.buildTable(this, 'month').then()
-    };
-
-    year.onclick = () => {
-      performButtonClick(year);
-      this.buildTable(this, 'year').then()
-    };
-
-    all.onclick = () => {
-      performButtonClick(all);
-      this.buildTable(this, 'all').then()
-    };
-
-    interval.onclick = () => {
-      performButtonClick(interval);
-      let to = document.getElementById('dateTo');
-      let from = document.getElementById('dateFrom');
-
-      const dateFrom = dayjs(from.value, "DD.MM.YYYY").format("YYYY-MM-DD");
-      const dateTo = dayjs(to.value, "DD.MM.YYYY").format("YYYY-MM-DD");
-
-      this.buildTable(this, 'interval', dateFrom, dateTo).then();
-    };
-
-    createIncome.onclick = () => {
-      location.href = '#/createOperation/income'
-    }
-
-    createExpense.onclick = () => {
-      location.href = '#/createOperation/expense'
-    }
-
+    this.addEventListeners();
+    this.performButtonClick(this.today);
     new Sidebars();
-    this.dataInit();
+    this.dataInit().then();
   }
 
-  async dataInit() {
+  private addEventListeners(): void {
+    if (this.today) {
+      this.today.onclick = (): void => {
+        this.performButtonClick(this.today);
+        const currentDate: Dayjs = dayjs();
+        const todayStart: string = currentDate.startOf('day').format("YYYY-MM-DD");
+        const todayEnd: string = currentDate.endOf('day').format("YYYY-MM-DD");
+        this.buildTable(this, 'today', todayStart, todayEnd).then();
+      };
+    }
+
+    if (this.week) {
+      this.week.onclick = (): void => {
+        this.performButtonClick(this.week);
+        const currentDate: Dayjs = dayjs();
+        const weekStart: string = currentDate.subtract(1, 'week').format("YYYY-MM-DD");
+        const weekEnd: string = currentDate.format("YYYY-MM-DD");
+        this.buildTable(this, 'week', weekStart, weekEnd).then();
+      };
+    }
+
+
+    if (this.month) {
+      this.month.onclick = (): void => {
+        this.performButtonClick(this.month);
+        const currentDate: Dayjs = dayjs();
+        const monthStart: string = currentDate.startOf('month').format("YYYY-MM-DD");
+        const monthEnd: string = currentDate.endOf('month').format("YYYY-MM-DD");
+        this.buildTable(this, 'month', monthStart, monthEnd).then();
+      };
+    }
+
+    if (this.year) {
+      this.year.onclick = (): void => {
+        this.performButtonClick(this.year);
+        const currentDate: Dayjs = dayjs();
+        const yearStart: string = currentDate.startOf('year').format("YYYY-MM-DD");
+        const yearEnd: string = currentDate.endOf('year').format("YYYY-MM-DD");
+        this.buildTable(this, 'year', yearStart, yearEnd).then();
+      };
+    }
+
+    if (this.all) {
+      this.all.onclick = (): void => {
+        this.performButtonClick(this.all);
+        this.buildTable(this, 'all').then();
+      };
+    }
+
+    if (this.interval) {
+      this.interval.onclick = (): void => {
+        this.performButtonClick(this.interval);
+        const from: HTMLInputElement | null = document.getElementById("dateFrom") as HTMLInputElement;
+        const to: HTMLInputElement | null = document.getElementById("dateTo") as HTMLInputElement;
+
+        if (from && to) {
+          const dateFrom: string = dayjs(from.value, "DD.MM.YYYY").format("YYYY-MM-DD");
+          const dateTo: string = dayjs(to.value, "DD.MM.YYYY").format("YYYY-MM-DD");
+
+          this.buildTable(this, 'interval', dateFrom, dateTo).then();
+        }
+      }
+    }
+
+    if (this.createIncome) {
+      this.createIncome.onclick = (): void => {
+        location.href = '#/createOperation/income'
+      };
+    }
+
+    if (this.createExpense) {
+      this.createExpense.onclick = (): void => {
+        location.href = '#/createOperation/expense'
+      };
+    }
+  }
+
+  private performButtonClick(btn: HTMLElement | null): void {
+    for (let i: number = 0; i < this.allBtns.length; i++) {
+      if (this.allBtns[i].classList.contains('active')) {
+        this.allBtns[i].classList.remove("active");
+      }
+    }
+    if (btn) {
+      btn.classList.add('active');
+    }
+  }
+
+  private async dataInit(): Promise<void> {
     await Sidebars.getBalance();
     await this.buildTable(this, 'today').then();
   }
 
   // строит таблицу операций на основе заданного периода и диапазона дат
-  async buildTable(that, period, from, to) {
-    const operationsArray = await new GetOperation(period, from, to);
-    const operations = Array.from(operationsArray);
+  private async buildTable(that: TableIncomeAndExpense, period: string, from?: string, to?: string): Promise<void> {
+    const operationsArray: OperationType[] = await GetOperation.getOperationsByPeriod(period, from, to);
+    const operations: OperationType[] = Array.from(operationsArray);
 
-    let tableRows = '';
-    let num = 1;
+    let tableRows: string = '';
+    let num: number = 1;
 
-    for (let i = 0; i < operations.length; i++) {
-      const operation = operations[i];
-      let categoryName = '';
+    for (let i: number = 0; i < operations.length; i++) {
+      const operation: OperationType = operations[i];
+      let categoryName: string = '';
 
       if (operation.type === 'income') {
         categoryName = 'доход';
@@ -101,9 +155,9 @@ export class TableIncomeAndExpense {
         categoryName = 'расход';
       }
 
-      let date = dayjs(operation.date).format('DD.MM.YYYY');
+      let date: string = dayjs(operation.date).format('DD.MM.YYYY');
 
-      const tableHTML =
+      const tableHTML: string =
         `<div class="list">
           <div class="operation-title number">${num}</div>
           <div class="operation-title type">${categoryName}</div>
@@ -130,55 +184,63 @@ export class TableIncomeAndExpense {
       num++;
       tableRows += tableHTML;
     }
-    this.budget.innerHTML = tableRows;
+    if (this.budget) {
+      this.budget.innerHTML = tableRows;
+    }
 
-    let classColor = document.getElementsByClassName('class-color');
+    let classColor: HTMLCollectionOf<Element> = document.getElementsByClassName('class-color');
 
-    for (let element of classColor) {
-      let type = element.previousSibling.previousSibling;
+    for (let i: number = 0; i < classColor.length; i++) {
+      let element: HTMLElement = classColor[i] as HTMLElement;
+      let type: HTMLElement | null = element.previousSibling?.previousSibling as HTMLElement | null;
 
-      if (type.textContent === 'доход') {
+
+      if (type && type.textContent === 'доход') {
         type.style.color = 'green';
       }
 
-      if (type.textContent === 'расход') {
+      if (type && type.textContent === 'расход') {
         type.style.color = 'red';
       }
     }
 
-    that.deleteOperation(that, operations, period, from, to);
-    await that.changeOperation(operations);
+    that.deleteOperation(that, operations, period, from, to).then();
+    that.changeOperation(operations);
   }
 
   // обработчики событий для кнопки удаления операций
-  async deleteOperation(that, operations, period, from, to) {
-    operations.forEach(operation => {
-      let operationBtn = document.getElementById('delete_' + operation.id);
-      operationBtn.onclick = () => popup(operation.id);
+  private async deleteOperation(that: TableIncomeAndExpense, operations: OperationType[], period: string, from?: string, to?: string): Promise<void> {
+    operations.forEach((operation: OperationType) => {
+      let operationBtn: HTMLElement | null = document.getElementById('delete_' + operation.id);
+      if (operationBtn) {
+        operationBtn.onclick = () => popup(operation.id);
+      }
     });
 
-    function popup(id) {
-      const popup = document.getElementById('popup');
-      const agree = document.getElementById('agree');
-      const disagree = document.getElementById('disagree');
+    function popup(id: number): void {
+      const popup: HTMLElement | null = document.getElementById('popup');
+      const agree: HTMLElement | null = document.getElementById('agree');
+      const disagree: HTMLElement | null = document.getElementById('disagree');
 
-      popup.style.display = 'flex';
+      if (popup && agree && disagree) {
+        popup.style.display = 'flex';
 
-      agree.onclick = () => {
-        deleteOperation(id);
-        popup.style.display = 'none';
-      };
+        agree.onclick = (): void => {
+          deleteOperationAsync(id);
+          popup.style.display = 'none';
+        };
 
-      disagree.onclick = () => popup.style.display = 'none';
+        disagree.onclick = (): string => popup.style.display = 'none';
+      }
     }
 
     // запрос на удаление операции с указанным идентификатором
-    async function deleteOperation(id) {
+    const deleteOperationAsync = async (id: number): Promise<void> => {
       try {
-        const result = await CustomHttp.request(config.host + '/operations/' + id, 'DELETE');
+        const result: DefaultResponseType = await CustomHttp.request(config.host + '/operations/' + id, 'DELETE');
 
         if (result) {
-          if (!result) {
+          if (!result.error) {
             await that.buildTable(that, period, from, to);
             new Sidebars();
             throw new Error(result.message);
@@ -194,13 +256,15 @@ export class TableIncomeAndExpense {
   }
 
   // обработчики событий для кнопки изменения операции
-  changeOperation(operations) {
-    operations.forEach(operation => {
-      let operationBtn = document.getElementById('edit_' + operation.id);
+  private changeOperation(operations: OperationType[]): void {
+    operations.forEach((operation: OperationType) => {
+      let operationBtn: HTMLElement | null = document.getElementById('edit_' + operation.id);
 
-      operationBtn.onclick = () => {
-        location.href = '#/changeOperation?' + operation.id;
-      };
+      if (operationBtn) {
+        operationBtn.onclick = (): void => {
+          location.href = '#/changeOperation?' + operation.id;
+        };
+      }
     })
   }
 }

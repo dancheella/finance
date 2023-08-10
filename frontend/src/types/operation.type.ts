@@ -1,8 +1,9 @@
 export type OperationType = {
-  id: number;
-  type: string;
-  category_id: number;
-  amount: number;
-  date: string;
-  comment: string;
+  id: number,
+  type: string,
+  amount: number,
+  date: string,
+  comment: string,
+  category: string
+  categoryId?: number
 }

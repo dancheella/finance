@@ -2,37 +2,62 @@ import {GetCategory} from "../services/getCategory";
 import {CustomHttp} from "../services/custom-http";
 import config from "../../config/config";
 import {Sidebars} from "./sidebars";
+import {CategoriesResponseType} from "../types/categoty-response.type";
+import {DefaultResponseType} from "../types/default-response.type";
 
 export class ChangeIncomeCategory {
+  readonly titleHTML: HTMLElement | null;
+  readonly urlRoute: string;
+  readonly categoryId: number;
+  readonly agreeBtn: HTMLElement | null;
+  readonly disagreeBtn: HTMLElement | null;
+
   constructor() {
-    this.title = document.getElementById('main-header');
-    const urlRoute = window.location.hash.split('?')[0];
-    const categoryId = Number(window.location.hash.split('?')[1]);
-    const agreeBtn = document.getElementById('agree');
-    const disagreeBtn = document.getElementById('disagree');
+    this.titleHTML = document.getElementById('main-header');
+    this.urlRoute = window.location.hash.split('?')[0];
+    this.categoryId = Number(window.location.hash.split('?')[1]);
+    this.agreeBtn = document.getElementById('agree');
+    this.disagreeBtn = document.getElementById('disagree');
     const that = this;
 
-    if (urlRoute === '#/changeIncCat') {
-      this.loadCategory('income', categoryId).then();
-      this.title.innerText = 'Редактирование категории доходов';
-      agreeBtn.onclick = changeInc;
-      disagreeBtn.onclick = () => {location.href = '#/incomes'}
+    if (this.urlRoute === '#/changeIncCat') {
+      this.loadCategory('income', this.categoryId).then();
+      if (this.titleHTML) {
+        this.titleHTML.innerText = 'Редактирование категории доходов';
+      }
+
+      if (this.agreeBtn) {
+        this.agreeBtn.onclick = changeInc;
+      }
+
+      if (this.disagreeBtn) {
+        this.disagreeBtn.onclick = (): void => {location.href = '#/incomes'}
+      }
     }
-    if (urlRoute === '#/changeExpCat') {
-      this.loadCategory('expense', categoryId).then();
-      this.title.innerText = 'Редактирование категории расходов';
-      agreeBtn.onclick = changeExp;
-      disagreeBtn.onclick = () => {location.href = '#/expenses'}
+
+    if (this.urlRoute === '#/changeExpCat') {
+      this.loadCategory('expense', this.categoryId).then();
+      if (this.titleHTML) {
+        this.titleHTML.innerText = 'Редактирование категории расходов';
+      }
+
+      if (this.agreeBtn) {
+        this.agreeBtn.onclick = changeExp;
+      }
+
+      if (this.disagreeBtn) {
+        this.disagreeBtn.onclick = (): void => {location.href = '#/expenses'}
+      }
     }
 
     function changeExp() {
-      that.changeCategory('/categories/expense/' + categoryId).then(() => {
+      that.changeCategory('/categories/expense/' + that.categoryId).then((): void => {
         location.href = '#/expenses'
       });
     }
 
     function changeInc() {
-      that.changeCategory('/categories/income/' + categoryId).then(() => {
+      that.changeCategory('/categories/income/' +  that.categoryId).then((): void => {
         location.href = '#/incomes'
       });
     }
@@ -41,26 +66,30 @@ export class ChangeIncomeCategory {
   }
 
   // загрузка категорию определенного типа
-  async loadCategory(typeCategory, categoryId) {
-    await Sidebars.getBalance(); // запрос на баланс
-    const categoryName = document.getElementById('name');
-    const categories = await new GetCategory(typeCategory);
-    let category = categories.find(item => item.id === categoryId);
-    categoryName.value = category.title;
+  async loadCategory(typeCategory: string, categoryId: number): Promise<void> {
+    await Sidebars.getBalance();
+    const categoryName: HTMLInputElement | null = document.getElementById('name') as HTMLInputElement;
+    if (categoryName) {
+      const categories: CategoriesResponseType[] = await GetCategory.categories(typeCategory);
+      const category: CategoriesResponseType | undefined = categories.find((item: CategoriesResponseType) => item.id === categoryId);
+      if (category) {
+        categoryName.value = category.title;
+      }
+    }
   }
 
   // обновление имени категории
-  async changeCategory(urlRoute) {
-    const categoryName = document.getElementById('name').value;
+  async changeCategory(urlRoute: string): Promise<void> {
+    const categoryName: HTMLInputElement | null = document.getElementById('name') as HTMLInputElement;
 
     try {
-      const result = await CustomHttp.request(config.host + urlRoute, 'PUT', {
+      const result: CategoriesResponseType | DefaultResponseType = await CustomHttp.request(config.host + urlRoute, 'POST', {
         title: categoryName
       });
 
-      if (result) {
-        if (!result) {
-          throw new Error(result.message);
+      if (!result) {
+        if ((result as DefaultResponseType).error !== undefined) {
+          throw new Error((result as DefaultResponseType).message);
         }
       }
     } catch (error) {

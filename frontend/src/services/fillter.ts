@@ -1,36 +1,51 @@
-import {GetOperation} from "./getOperation";
+import { GetOperation } from "./getOperation";
+import { OperationType } from "../types/operation.type";
 
 export class Filters {
-  constructor(period, from, to) {
-    return this.getData(period, from, to)
-      .then(data => this.processData(...data));
+  readonly period: string;
+  readonly from?: string;
+  readonly to?: string;
+
+  constructor(period: string, from?: string, to?: string) {
+    this.period = period;
+    this.from = from;
+    this.to = to;
   }
 
-  async getData(period, from, to) {
-    const operations = await new GetOperation(period, from, to);
+  async getData(): Promise<[string[], number[], string[], number[]]> {
+    const [incomesCategories, incomesData, expenseCategories, expensesData]:[string[], number[], string[], number[]] = await this.fetchData();
+    return [incomesCategories, incomesData, expenseCategories, expensesData];
+  }
+
+  private async fetchData(): Promise<[string[], number[], string[], number[]]> {
+    const operations: OperationType[] = await GetOperation.getOperationsByPeriod(
+      this.period,
+      this.from,
+      this.to
+    );
 
     // разделяются операции на доходы и расходы, получаем уникальные категории
-    const [incomesOperations, expenseOperations] = this.getOperationsByCategory(operations);
-    const incomesCategories = this.getUniqueCategories(incomesOperations);
-    const expenseCategories = this.getUniqueCategories(expenseOperations);
+    const [incomesOperations, expenseOperations]: [OperationType[], OperationType[]] = this.getOperationsByCategory(operations);
+    const incomesCategories: string[] = this.getUniqueCategories(incomesOperations);
+    const expenseCategories: string[] = this.getUniqueCategories(expenseOperations);
 
     // вычисляется сумма для каждой категории доходов и расходов
-    const incomesData = this.calculateTotalAmountsByCategory(incomesOperations, incomesCategories);
-    const expensesData = this.calculateTotalAmountsByCategory(expenseOperations, expenseCategories);
+    const incomesData: number[] = this.calculateTotalAmountsByCategory(incomesOperations, incomesCategories);
+    const expensesData: number[] = this.calculateTotalAmountsByCategory(expenseOperations, expenseCategories);
 
     return [incomesCategories, incomesData, expenseCategories, expensesData];
   }
 
-  getOperationsByCategory(operations) {
+  private getOperationsByCategory(operations: OperationType[]): [OperationType[], OperationType[]] {
     // принимается массив операций и разделяет его на доходы и расходы
-    const incomesOperations = operations.filter(operation => operation.type === 'income');
-    const expenseOperations = operations.filter(operation => operation.type === 'expense');
+    const incomesOperations: OperationType[] = operations.filter((operation: OperationType) => operation.type === "income");
+    const expenseOperations: OperationType[] = operations.filter((operation: OperationType) => operation.type === "expense");
     return [incomesOperations, expenseOperations];
   }
 
-  getUniqueValues(arr) {
+  private getUniqueValues(arr: string[]): string[] {
     // принимается массив и возвращает массив уникальных значений
-    let result = [];
+    let result: string[] = [];
     for (let str of arr) {
       if (!result.includes(str)) {
         result.push(str);
@@ -39,21 +54,16 @@ export class Filters {
     return result;
   }
 
-  getUniqueCategories(operations) {
+  private getUniqueCategories(operations: OperationType[]): string[] {
     // принимается массив операций и возвращает массив уникальных категорий
-    return this.getUniqueValues(operations.map(({category}) => category));
+    return this.getUniqueValues(operations.map(({ category }) => category));
   }
 
-  calculateTotalAmountsByCategory(operationsArray, categories) {
-    // принимается массив операций и массив категорий для вычисления суммы для каждой категории
-    return categories.map(category => operationsArray
-      .filter(operation => operation.category === category) // отфильтровка операций, относящихся только к текущей категории
-      .reduce((acc, operation) => acc + operation.amount, 0) // складывается сумма операции
+  private calculateTotalAmountsByCategory(operationsArray: OperationType[], categories: string[]): number[] {
+    return categories.map((category: string) =>
+      operationsArray
+        .filter((operation: OperationType) => operation.category === category)
+        .reduce((acc: number, operation: OperationType) => acc + operation.amount, 0)
     );
-  }
-
-  processData(incomesCategories, incomesData, expenseCategories, expensesData) {
-    // возвращаем данные после обработки
-    return [incomesCategories, incomesData, expenseCategories, expensesData];
   }
 }

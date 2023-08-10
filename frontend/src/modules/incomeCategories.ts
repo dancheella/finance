@@ -1,20 +1,25 @@
 import {Sidebars} from "./sidebars";
 import {GetCategory} from "../services/getCategory";
 import {Popup} from "./popap";
+import {CategoriesResponseType} from "../types/categoty-response.type";
 
 export class IncomeCategories {
+  private title: HTMLElement | null;
+  private category: HTMLElement | null;
+  readonly urlRoute: string;
+
   constructor() {
     this.title = document.getElementById('main-header');
     this.category = document.getElementById('category');
-    const urlRoute = window.location.hash.split('?')[0];
+    this.urlRoute = window.location.hash.split('?')[0];
 
-    if (urlRoute === '#/incomes') {
-      this.title.innerText = 'Доходы';
+    if (this.urlRoute === '#/incomes') {
+      (this.title as HTMLElement).innerText = 'Доходы';
       this.createCategoriesTable('income').then(() => new Popup('income'));
     }
 
-    if (urlRoute === '#/expenses') {
-      this.title.innerText = 'Расходы';
+    if (this.urlRoute === '#/expenses') {
+      (this.title as HTMLElement).innerText = 'Расходы';
       this.createCategoriesTable('expense').then(() => new Popup('expense'));
     }
 
@@ -22,14 +27,14 @@ export class IncomeCategories {
   }
 
   // создание категорий доходов или расходов в зависимости от переданного аргумента categories
-  async createCategoriesTable(categories) {
+  private async createCategoriesTable(categories: string): Promise<void> {
     await Sidebars.getBalance(); // запрос на баланс
-    let categoriesList = await new GetCategory(categories);
-    let tableCat = '';
-    const createCat = `<div class="category-item add-category-item" id="add-category-item">+</div>`
+    let categoriesList: CategoriesResponseType[] = await GetCategory.categories(categories);
+    let tableCat: string = '';
+    const createCat: string = `<div class="category-item add-category-item" id="add-category-item">+</div>`
 
-    categoriesList.forEach(a => {
-      const categoryHTML =
+    categoriesList.forEach((a: CategoriesResponseType) => {
+      const categoryHTML: string =
         `<div class="category-item" id="categoryItem">
          <div class="category-item-title" id="categoryItemTitle">${a.title}</div>
            <div class="category-item-action">
@@ -40,19 +45,23 @@ export class IncomeCategories {
       tableCat += categoryHTML;
     });
 
-    this.category.innerHTML = tableCat + createCat;
+    (this.category as HTMLElement).innerHTML = tableCat + createCat;
     this.changePage(categories);
   }
 
-  changePage(categories) {
-    const createBtn = document.getElementById('add-category-item');
+  private changePage(categories: string): void {
+    const createBtn: HTMLElement | null = document.getElementById('add-category-item');
 
     if (categories === 'income') {
-      createBtn.onclick = () => location.href = "#/createIncCat";
+      if (createBtn) {
+        createBtn.onclick = (): string => location.href = "#/createIncCat";
+      }
     }
 
     if (categories === 'expense') {
-      createBtn.onclick = () => location.href = "#/createExpCat";
+      if (createBtn) {
+        createBtn.onclick = (): string => location.href = "#/createExpCat";
+      }
     }
   }
 }

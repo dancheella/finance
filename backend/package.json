@@ -23,6 +23,7 @@
     "taffydb": "^2.7.3"
   },
   "devDependencies": {
+    "@types/chart.js": "^2.9.37",
     "nodemon": "^2.0.19"
   }
 }

@@ -1,125 +1,175 @@
 import {Auth} from "../services/auth";
 import config from "../../config/config";
 import {CustomHttp} from "../services/custom-http";
+import {UserInfoType} from "../types/user-info.type";
+import {BalanceResponseType} from "../types/balance-response.type";
 
 export class Sidebars {
+  readonly mainBtn: HTMLElement | null;
+  readonly allBtn: HTMLCollectionOf<Element>;
+  readonly dropdownToggle: HTMLElement | null;
+  readonly dropdownBtn: HTMLElement | null;
+  readonly dropdownMenu: HTMLElement | null;
+  readonly incomesBtn: HTMLElement | null;
+  readonly expenseBtn: HTMLElement | null;
+  readonly incExpBtn: HTMLElement | null;
+  readonly profileNameElement: HTMLElement | null;
+  readonly imageUser: HTMLElement | null;
+  readonly logout: HTMLElement | null;
+  readonly urlRoute: string;
+  readonly userInfo: UserInfoType | null;
+  readonly accessToken: string | null;
+  readonly routeButtonMap: { [key: string]: HTMLElement | null };
+
   constructor() {
-    const mainBtn = document.getElementById('mainBtn');
-    const allBtn = document.getElementsByClassName('sidebar-link');
-    const dropdownToggle = document.getElementById('dropdown-toggle');
-    const dropdownBtn = document.getElementById('dropdown-button');
-    const dropdownMenu = document.getElementById('dropdown-menu');
-    const incomesBtn = document.getElementById('catIncomesBtn');
-    const expenseBtn = document.getElementById('catExpenseBtn');
-    const incExpBtn = document.getElementById('incomesExpenseBtn');
-    const profileNameElement = document.getElementById('userName');
-    const imageUser = document.getElementById('user-image');
-    const logout = document.getElementById('logout');
-    const urlRoute = window.location.hash.split('?')[0];
+    this.mainBtn = document.getElementById('mainBtn');
+    this.allBtn = document.getElementsByClassName('sidebar-link');
+    this.dropdownToggle = document.getElementById('dropdown-toggle');
+    this.dropdownBtn = document.getElementById('dropdown-button');
+    this.dropdownMenu = document.getElementById('dropdown-menu');
+    this.incomesBtn = document.getElementById('catIncomesBtn');
+    this.expenseBtn = document.getElementById('catExpenseBtn');
+    this.incExpBtn = document.getElementById('incomesExpenseBtn');
+    this.profileNameElement = document.getElementById('userName');
+    this.imageUser = document.getElementById('user-image');
+    this.logout = document.getElementById('logout');
+    this.urlRoute = window.location.hash.split('?')[0];
 
-    const userInfo = Auth.getUserInfo();
+    this.userInfo = Auth.getUserInfo();
+    this.accessToken = localStorage.getItem(Auth.accessTokenKey);
 
-    const accessToken = localStorage.getItem(Auth.accessTokenKey);
-
-    // пользователь
-    if (userInfo && accessToken) {
-      profileNameElement.innerText = `${userInfo.name} ${userInfo.lastName}`;
+    if (this.userInfo && this.accessToken && this.profileNameElement) {
+      this.profileNameElement.innerText = `${this.userInfo.name} ${this.userInfo.lastName}`;
     }
 
-    dropdownMenu.style.display = 'none';
-    dropdownBtn.style.transform = 'rotate(-90deg)';
-    logout.style.display = 'none';
+    if (this.dropdownMenu && this.dropdownBtn) {
+      this.dropdownMenu.style.display = 'none';
+      this.dropdownBtn.style.transform = 'rotate(-90deg)';
+    }
+
+    if (this.logout) {
+      this.logout.style.display = 'none';
+    }
 
     // соответствие между URL-путями и кнопками на странице
-    const routeButtonMap = {
-      "#/main": mainBtn,
-      "#/operations": incExpBtn,
-      "#/incomes": incomesBtn,
-      "#/expenses": expenseBtn,
-      "#/createOperation/income": incExpBtn,
-      "#/createIncCat": incomesBtn,
-      "#/createExpCat": expenseBtn,
-      "#/changeIncCat": incomesBtn,
-      "#/changeExpCat": expenseBtn,
+    this.routeButtonMap = {
+      "#/main": this.mainBtn,
+      "#/operations": this.incExpBtn,
+      "#/incomes": this.incomesBtn,
+      "#/expenses": this.expenseBtn,
+      "#/createOperation/income": this.incExpBtn,
+      "#/createIncCat": this.incomesBtn,
+      "#/createExpCat": this.expenseBtn,
+      "#/changeIncCat": this.incomesBtn,
+      "#/changeExpCat": this.expenseBtn,
     };
 
     // проверка URL-пути
-    if (routeButtonMap[urlRoute]) {
-      setActiveButton(routeButtonMap[urlRoute]);
+    if (this.routeButtonMap[this.urlRoute]) {
+      this.setActiveButton(this.routeButtonMap[this.urlRoute]);
     }
 
-    // функция устанавливает класс "active" переданной кнопке и удаляет этот класс у всех остальных кнопок
-    function setActiveButton(btn) {
-      for (let i = 0; i < allBtn.length; i++) {
-        if (allBtn[i].classList.contains('active')) {
-          allBtn[i].classList.remove("active");
+    if (this.mainBtn) {
+      this.mainBtn.onclick = (): void => {
+        location.href = '#/main';
+      };
+    }
+
+    if (this.incExpBtn) {
+      this.incExpBtn.onclick = (): void => {
+        location.href = '#/operations';
+      };
+    }
+
+    if (this.incomesBtn) {
+      this.incomesBtn.onclick = (): void => {
+        location.href = '#/incomes';
+      };
+    }
+
+    if (this.expenseBtn) {
+      this.expenseBtn.onclick = (): void => {
+        location.href = '#/expenses';
+      };
+    }
+
+    if (this.dropdownToggle) {
+      this.dropdownToggle.onclick = (): void => {
+        this.toggleDropdownMenu();
+      }
+    }
+
+    if (this.imageUser) {
+      this.imageUser.onclick = (): void => {
+        if (this.logout) {
+          if (this.logout.style.display !== 'flex') {
+            this.logout.style.display = 'flex'
+          } else {
+            this.logout.style.display = 'none'
+          }
         }
       }
+    }
+
+    if (this.logout) {
+      this.logout.onclick = (): void => {
+        location.href = '#/logout'
+      }
+    }
+  }
+
+  // функция устанавливает класс "active" переданной кнопке и удаляет этот класс у всех остальных кнопок
+  private setActiveButton(btn: HTMLElement | null): void {
+    for (let i: number = 0; i < this.allBtn.length; i++) {
+      if (this.allBtn[i].classList.contains('active')) {
+        this.allBtn[i].classList.remove("active");
+      }
+    }
+
+    if (btn) {
       btn.classList.add('active');
-      if (btn === incomesBtn || btn === expenseBtn) {
-        dropdownToggle.classList.add('active');
-        dropdownMenu.style.display = 'flex';
-        dropdownMenu.style.flexDirection = 'column';
-        dropdownBtn.style.transform = 'rotate(0deg)';
-      }
     }
 
-    function toggleDropdownMenu() {
-      if (dropdownToggle.classList.contains('active')) {
-        dropdownToggle.classList.remove('active');
-        dropdownMenu.style.display = 'none';
-        dropdownBtn.style.transform = 'rotate(-90deg)';
+    if (this.dropdownToggle && this.dropdownMenu && this.dropdownBtn) {
+      if (btn === this.incomesBtn || btn === this.expenseBtn) {
+        this.dropdownToggle.classList.add('active');
+        this.dropdownMenu.style.display = 'flex';
+        this.dropdownMenu.style.flexDirection = 'column';
+        this.dropdownBtn.style.transform = 'rotate(0deg)';
+      }
+    }
+  }
+
+  private toggleDropdownMenu(): void {
+    if (this.dropdownToggle && this.dropdownMenu && this.dropdownBtn) {
+      if (this.dropdownToggle.classList.contains('active')) {
+        this.dropdownToggle.classList.remove('active');
+        this.dropdownMenu.style.display = 'none';
+        this.dropdownBtn.style.transform = 'rotate(-90deg)';
       } else {
-        dropdownToggle.classList.add('active');
-        dropdownMenu.style.display = 'flex';
-        dropdownMenu.style.flexDirection = 'column';
-        dropdownBtn.style.transform = 'rotate(0deg)';
+        this.dropdownToggle.classList.add('active');
+        this.dropdownMenu.style.display = 'flex';
+        this.dropdownMenu.style.flexDirection = 'column';
+        this.dropdownBtn.style.transform = 'rotate(0deg)';
       }
-    }
-
-    mainBtn.onclick = () => {
-      location.href = '#/main';
-    };
-
-    incExpBtn.onclick = () => {
-      location.href = '#/operations';
-    };
-
-    incomesBtn.onclick = () => {
-      location.href = '#/incomes';
-    };
-    expenseBtn.onclick = () => {
-      location.href = '#/expenses';
-    };
-
-    dropdownToggle.onclick = () => {
-      toggleDropdownMenu();
-    }
-
-    imageUser.onclick = () => {
-      if (logout.style.display !== 'flex') {
-        logout.style.display = 'flex'
-      } else {
-        logout.style.display = 'none'
-      }
-    }
-
-    logout.onclick = () => {
-      location.href = '#/logout'
     }
   }
 
   // запрос баланса
-  static async getBalance() {
-    const balanceProfile = document.getElementById('balance');
+  public static async getBalance(): Promise<void> {
+    const balanceProfile: HTMLElement | null = document.getElementById('balance');
     try {
-      const response = await CustomHttp.request(config.host + '/balance');
+      const response: BalanceResponseType = await CustomHttp.request(config.host + '/balance');
       if (response) {
-        balanceProfile.innerText = response.balance;
-        return response;
+        if (balanceProfile) {
+          balanceProfile.innerText = response.balance.toString();
+        }
+        // return response;
       } else {
-        balanceProfile.innerText = 0;
-        return 0;
+        if (balanceProfile) {
+          balanceProfile.innerText = '0';
+        }
+        // return 0;
       }
     } catch (error) {
       console.log(error);

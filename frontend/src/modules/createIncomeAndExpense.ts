@@ -1,126 +1,173 @@
 import {Sidebars} from "./sidebars";
 import {GetCategory} from "../services/getCategory";
-import dayjs from 'dayjs';
+import dayjs, {Dayjs} from 'dayjs';
 import {CustomHttp} from "../services/custom-http";
 import config from "../../config/config";
+import {CreateOperationTableType} from "../types/create-operation-table.type";
+import {DefaultResponseType} from "../types/default-response.type";
+import {CategoriesResponseType} from "../types/categoty-response.type";
 
 export class CreateIncomeAndExpense {
-  constructor(category) {
-    new Sidebars();
+  readonly titleHTML: HTMLElement | null;
+  readonly disagree: HTMLElement | null;
+  readonly typeSelect: HTMLSelectElement | null;
+  readonly incomeOption: HTMLOptionElement | null;
+  readonly expenseOption: HTMLOptionElement | null;
+  private categories: CategoriesResponseType[] = [];
 
-    const titleHTML = document.getElementById('main-header');
-    const disagree = document.getElementById('disagree');
-
-    this.typeSelect = document.getElementById('type');
-    const incomeOption = document.getElementById('income');
-    const expenseOption = document.getElementById('expense');
+  constructor(category: string) {
+    this.titleHTML = document.getElementById('main-header');
+    this.disagree = document.getElementById('disagree');
+    this.incomeOption = document.getElementById('income') as HTMLOptionElement | null;
+    this.expenseOption = document.getElementById('expense') as HTMLOptionElement | null;
+    this.typeSelect = document.getElementById('type') as HTMLSelectElement | null;
 
     if (category === 'income') {
-      incomeOption.selected = true;
+      if (this.incomeOption) {
+        this.incomeOption.selected = true;
+      }
     } else if (category === 'expense') {
-      expenseOption.selected = true;
+      if (this.expenseOption) {
+        this.expenseOption.selected = true;
+      }
     }
 
-    this.typeSelect.disabled = true;
-    titleHTML.innerText = document.title;
+    if (this.typeSelect) {
+      this.typeSelect.disabled = true;
+    }
+
+    if (this.titleHTML) {
+      this.titleHTML.innerText = document.title;
+    }
 
     // перенаправление на страницу
-    disagree.onclick = () => {
-      location.href = '#/operations'
+    if (this.disagree) {
+      this.disagree.onclick = (): void => {
+        location.href = '#/operations'
+      }
     }
 
     this.createOperation().then();
-    this.dataInit();
+    this.dataInit().then();
+    new Sidebars();
   }
 
-  async dataInit() {
+  private async dataInit(): Promise<void> {
     await Sidebars.getBalance();
-    this.categories = await this.getCategories(this.typeSelect.value);
+    if (this.typeSelect) {
+      this.categories = await this.getCategories(this.typeSelect.value);
+    }
   }
 
   // получение списка категорий в зависимости от выбранного типа операции
-  async getCategories(type) {
-    const options = [];
+  private async getCategories(type: string): Promise<CategoriesResponseType[]> {
+    const options: HTMLOptionElement[] = [];
+    const categories: CategoriesResponseType[] = await GetCategory.categories(type);
+    const category: HTMLElement | null = document.getElementById('category');
 
-    const categories = await new GetCategory(type);
+    if (category) {
+      const items: HTMLOptionElement[] = Array.from(category.getElementsByTagName('option'));
+      const filteredOptions: HTMLOptionElement[] = items.filter((item: HTMLOptionElement) => item.id.includes('option_'));
+      filteredOptions.forEach((item: HTMLOptionElement) => item.remove());
+    }
 
-    const category = document.getElementById('category');
-    const items = [...category.getElementsByTagName('option')];
-    const filteredOptions = items.filter(item => item.id.includes('option_'));
-    filteredOptions.forEach(item => item.remove());
-
-    categories.forEach(item => {
-      const option = document.createElement('option');
+    categories.forEach((item: CategoriesResponseType): void => {
+      const option: HTMLOptionElement = document.createElement('option');
       option.setAttribute('id', 'option_' + item.id);
       option.setAttribute('value', item.title);
       option.innerText = item.title;
       options.push(option);
     });
 
-    options.forEach(item => {
-      category.appendChild(item);
-    });
+    if (category) {
+      options.forEach((item: HTMLOptionElement): void => {
+        category.appendChild(item);
+      });
+    }
 
     return categories;
   }
 
   // создание информации об операции
-  async createOperation() {
-    let operation = {};
-    const category = document.getElementById('category');
-    const amount = document.getElementById('price');
-    const date = document.getElementById('date');
-    const comment = document.getElementById('comment');
-    const agree = document.getElementById('agree');
+  async createOperation(): Promise<void> {
+    let operation = {
+      type: '',
+      categoryId: 0,
+      amount: 0,
+      date: '',
+      comment: '',
+    };
 
-    agree.setAttribute('disabled', 'disabled');
+    const category: HTMLSelectElement | null = document.getElementById('category') as HTMLSelectElement | null;
+    const amount: HTMLInputElement | null = document.getElementById('price') as HTMLInputElement | null;
+    const date: HTMLInputElement | null = document.getElementById('date') as HTMLInputElement | null;
+    const comment: HTMLInputElement | null = document.getElementById('comment') as HTMLInputElement | null;
+    const agree: HTMLButtonElement | null = document.getElementById('agree') as HTMLButtonElement | null;
+
+    if (agree) {
+      agree.setAttribute('disabled', 'disabled');
+    }
 
     // выбор категорий в зависимости от типа
-    operation.type = this.typeSelect.value;
-    this.typeSelect.style.color = 'black';
+    if (this.typeSelect) {
+      operation.type = this.typeSelect.value;
+      this.typeSelect.style.color = 'black';
+    }
 
-    category.onchange = () => {
-      operation.categoryId = this.categories.find(item => item.title === category.value).id;
-      operation.category = category.value;
-      category.style.color = 'black';
-      validation();
-    };
+    if (category) {
+      category.onchange = (): void => {
+        const selectedCategory: CategoriesResponseType | undefined = this.categories.find((item: CategoriesResponseType) => item.title === category.value);
+        if (selectedCategory) {
+          operation.categoryId = selectedCategory.id;
+          category.style.color = 'black';
+          validation();
+        }
+      };
+    }
 
-    amount.oninput = () => {
-      const inputValue = amount.value;
-      const cleanedValue = inputValue.replace(/[^0-9]/g, '');
-      amount.value = cleanedValue;
-      operation.amount = Number(cleanedValue);
-      validation();
-    };
+    if (amount) {
+      amount.oninput = (): void => {
+        const inputValue: string = amount.value;
+        const cleanedValue: string = inputValue.replace(/[^0-9]/g, '');
+        amount.value = cleanedValue;
+        operation.amount = Number(cleanedValue);
+        validation();
+      };
+    }
 
-    date.oninput = () => {
-      const inputValue = date.value;
-      const parsedDate = dayjs(inputValue, 'YYYY-MM-DD');
-      if (parsedDate.isValid()) {
-        operation.date = parsedDate.format('YYYY-MM-DD');
-      } else {
-        operation.date = null;
+    if (date) {
+      date.oninput = (): void => {
+        const inputValue: string = date.value;
+        const parsedDate: Dayjs = dayjs(inputValue, 'YYYY-MM-DD');
+        if (parsedDate.isValid()) {
+          operation.date = parsedDate.format('YYYY-MM-DD');
+        } else {
+          operation.date = '';
+        }
+        validation();
+      };
+    }
+
+    if (comment) {
+      comment.oninput = (): void => {
+        const inputValue: string = comment.value;
+        const cleanedValue: string = inputValue.replace(/[^a-zA-Zа-яА-ЯУЁё0-9,.!?/ ]/g, ''); // Оставить только буквенно-цифровые символы и знаки препинания
+        comment.value = cleanedValue;
+        operation.comment = cleanedValue;
+        validation();
+      };
+    }
+
+    function validation(): void {
+      if (agree) {
+        agree.disabled = !(operation.type && operation.categoryId && operation.amount && operation.date && operation.comment);
       }
-      validation();
-    };
-
-    comment.oninput = () => {
-      const inputValue = comment.value;
-      const cleanedValue = inputValue.replace(/[^a-zA-Zа-яА-ЯУЁё0-9,.!?/ ]/g, ''); // Оставить только буквенно-цифровые символы и знаки препинания
-      comment.value = cleanedValue;
-      operation.comment = cleanedValue;
-      validation();
-    };
-
-    function validation() {
-      agree.disabled = !(operation.type && operation.categoryId && operation.amount && operation.date && operation.comment);
     }
 
     // отправка созданной операции на сервер
-    async function sendOperationToServer(operation) {
+    async function sendOperationToServer(operation: CreateOperationTableType): Promise<void> {
       try {
-        const result = await CustomHttp.request(config.host + '/operations', "POST", {
+        const result: CreateOperationTableType | DefaultResponseType = await CustomHttp.request(config.host + '/operations', "POST", {
           type: operation.type,
           category_id: operation.categoryId,
           amount: operation.amount,
@@ -129,19 +176,21 @@ export class CreateIncomeAndExpense {
         });
         if (result) {
           location.href = '#/operations';
-          if (!result) {
+          if ((result as DefaultResponseType).error !== undefined) {
             new Sidebars();
-            throw new Error(result.message);
+            throw new Error((result as DefaultResponseType).message);
           }
         }
       } catch (error) {
-        return  console.log(error);
+        return console.log(error);
       }
     }
 
     // перенаправление на страницу
-    agree.onclick = () => {
-      sendOperationToServer(operation);
+    if (agree) {
+      agree.onclick = (): void => {
+        sendOperationToServer(operation);
+      }
     }
   }
 }
