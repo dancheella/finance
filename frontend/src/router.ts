@@ -1,19 +1,25 @@
-import {Form} from "./modules/form.js";
-import {Main} from "./modules/main.js";
-import {Auth} from "./services/auth.js";
-import {TableIncomeAndExpense} from "./modules/tableIncomeAndExpense.js";
-import {IncomeCategories} from "./modules/incomeCategories.js";
-import {ChangeIncomeAndExpense} from "./modules/changeIncomeAndExpense.js";
-import {CreateIncomeCategory} from "./modules/createIncomeCategory.js";
-import {CreateIncomeAndExpense} from "./modules/createIncomeAndExpense.js";
-import {ChangeIncomeCategory} from "./modules/changeIncomeCategory.js";
+import {Form} from "./modules/form";
+import {Main} from "./modules/main";
+import {Auth} from "./services/auth";
+import {TableIncomeAndExpense} from "./modules/tableIncomeAndExpense";
+import {IncomeCategories} from "./modules/incomeCategories";
+import {ChangeIncomeAndExpense} from "./modules/changeIncomeAndExpense";
+import {CreateIncomeCategory} from "./modules/createIncomeCategory";
+import {CreateIncomeAndExpense} from "./modules/createIncomeAndExpense";
+import {ChangeIncomeCategory} from "./modules/changeIncomeCategory";
+import {RouteType} from "./types/route.type";
 
 export class Router {
+  readonly contentElement: HTMLElement | null;
+  readonly stylesElement: HTMLElement | null;
+  readonly titleElement: HTMLElement | null;
+
+  private routes: RouteType[];
+
   constructor() {
     this.contentElement = document.getElementById('content');
     this.stylesElement = document.getElementById('styles');
     this.titleElement = document.getElementById('title');
-
 
     this.routes = [
       {
@@ -136,22 +142,33 @@ export class Router {
     ]
   }
 
-  async openRoute() {
-    const urlRoute = window.location.hash.split('?')[0];
+  public async openRoute(): Promise<void> {
+    const urlRoute: string = window.location.hash.split('?')[0];
 
     if (urlRoute === '#/logout') {
-      await Auth.logout();
-      window.location.href = '#/';
-      return;
+      const result: boolean = await Auth.logout();
+      if (result) {
+        window.location.href = '#/';
+        return;
+      }
     }
 
-    const newRoute = this.routes.find(item => {
+    const newRoute: RouteType | undefined = this.routes.find((item: RouteType) => {
       return item.route === urlRoute;
     })
 
     if (!newRoute) {
       window.location.href = '#/';
       return;
+    }
+
+    if (!this.contentElement || !this.stylesElement || !this.titleElement) {
+      if (urlRoute === '#/') {
+        return;
+      } else {
+        window.location.href = '#/';
+        return;
+      }
     }
 
     this.contentElement.innerHTML = await fetch(newRoute.template).then(response => response.text());
